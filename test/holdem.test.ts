@@ -4,8 +4,23 @@ import { HoldemHandStepper, PokerGameState } from '../src/poker';
 
 describe('Holdem Poker', () => {
   const h:HoldemHandStepper = new HoldemHandStepper();
+
   describe('#next', () => {
-    it('should return dealer options with a 1 action list', () => {
+    it('throw when seats are <2', () => {
+      const state:PokerGameState = {
+        numberSeats: 1, actions: []
+      }
+      expect(() => h.next(state)).to.throw(Error);
+    });
+
+    it('throw when seats are >10', () => {
+      const state:PokerGameState = {
+        numberSeats: 11, actions: []
+      }
+      expect(() => h.next(state)).to.throw(Error);
+    });
+
+    it('return dealer options with a 0 action list', () => {
       let state:PokerGameState = {
         numberSeats: 6,
         actions: []
@@ -15,6 +30,9 @@ describe('Holdem Poker', () => {
       const [seat, actions] = result;
       expect(seat).to.equal('D');
       expect(actions).to.deep.equal(['deal']);
-    })
-  })
+    });
+
+    
+
+  });
 })

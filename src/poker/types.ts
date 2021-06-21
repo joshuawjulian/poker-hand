@@ -9,10 +9,10 @@ export interface Card {
 
 export type Seat = number | 'D';
 
-export type PlayerAction = 'fold'|'check'|'bet'|'call';
-export type DealerAction = 'deal'|'end';
+export type PlayerAction = 'fold'|'check'|'bet'|'call'|'blind'|'straddle'|'ante';
+export type DealerAction = 'deal'|'end'|'options';
 
-export type Action = PlayerAction | DealerAction;
+export type Action = PlayerAction | DealerAction | null;
 
 export interface ActionDetail {
   seat: Seat;
@@ -31,4 +31,12 @@ export interface PokerHandStepper {
    * @param state 
    */
   next(state:PokerGameState):[Seat,Action[]];  
+
+
+  /**
+   * Push the next action with verification
+   * @param action 
+   * @param state 
+   */
+  push(action:ActionDetail, state:PokerGameState):PokerGameState;
 }
