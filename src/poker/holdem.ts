@@ -20,7 +20,7 @@ export class HoldemHandStepper implements PokerHandStepper {
 
     // new poker hand
     if(state.actions.length === 0)
-      return [1,['blind', 'bet', 'fold', 'check']];
+      return [1,['blind', 'bet', 'fold', 'check', 'straddle']];
     
   }
 
@@ -28,5 +28,27 @@ export class HoldemHandStepper implements PokerHandStepper {
   push(action:ActionDetail, state:PokerGameState):PokerGameState {
 
     return state;
+  }
+
+  seatWithNextAction(state:PokerGameState):Seat {
+    if(state.actions.length === 0) return 'D';
+
+    for(let i = 0; i < state.actions.length; i++) {
+
+    }
+  }
+
+  lastActionForAllSeats(state:PokerGameState):Action[] {
+    let actions:Action[] = 
+      (new Array<Action>(state.numberSeats)).fill(null);
+    
+    state.actions.forEach((currAction:ActionDetail, index:number) => {
+      if(currAction.seat == 'D') 
+        actions[0] = currAction.action;
+      else
+        actions[currAction.seat] = currAction.action;
+    });
+
+    return actions;
   }
 }

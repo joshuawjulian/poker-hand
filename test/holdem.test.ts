@@ -1,9 +1,11 @@
 import { expect } from 'chai';
 
-import { HoldemHandStepper, PokerGameState } from '../src/poker';
+import { Action, HoldemHandStepper, PokerGameState } from '../src/poker';
+import {basicFullHand} from './gameState';
+
+const h:HoldemHandStepper = new HoldemHandStepper();
 
 describe('Holdem Poker', () => {
-  const h:HoldemHandStepper = new HoldemHandStepper();
 
   describe('#next', () => {
     it('throw when seats are <2', () => {
@@ -28,11 +30,20 @@ describe('Holdem Poker', () => {
       const result = h.next(state);
       expect(result).to.be.an.instanceof(Array);
       const [seat, actions] = result;
-      expect(seat).to.equal('D');
-      expect(actions).to.deep.equal(['deal']);
+      expect(seat).to.equal(1);
+      expect(actions).to.deep.equal(['blind', 'bet', 'fold', 'check', 'straddle']);
     });
 
     
 
   });
+
+  describe('#lastActionForAllSeats', () => {
+    it('basic example', () => {
+      let lastActions:Action[] = h.lastActionForAllSeats(basicFullHand[0]);
+      expect(lastActions[1]).to.equal('blind');
+      expect(lastActions[2]).to.equal('blind');
+      expect(lastActions[3]).to.equal(null);
+    })
+  })
 })
