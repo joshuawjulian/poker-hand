@@ -29,6 +29,32 @@ basicFullHand[1].actions.push(
   }
 );
 
+basicFullHand[2] = JSON.parse(JSON.stringify(basicFullHand[1]));
+basicFullHand[2].actions.push(
+  {
+    seat:4,
+    action: 'fold'
+  }
+);
+
+basicFullHand[2].actions.push(
+  {
+    seat: 5,
+    action: 'bet',
+    detail: 15
+  }
+);
+
+basicFullHand[2].actions.push(
+  {
+    seat: 6,
+    action: 'bet',
+    detail: 40
+  }
+)
+
+
+
 
 
 

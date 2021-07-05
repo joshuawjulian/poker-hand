@@ -7,6 +7,7 @@ export interface Card {
   suit:Suit;
 }
 
+// Seat 0 === dealer also
 export type Seat = number | 'D';
 
 export type PlayerAction = 'fold'|'check'|'bet'|'call'|'blind'|'straddle'|'ante';
