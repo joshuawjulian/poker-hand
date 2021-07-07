@@ -23,6 +23,7 @@ export interface ActionDetail {
 
 export interface PokerGameState {
   numberSeats:number;
+	nonStandardOrder?:Seat[];
   actions:ActionDetail[];
 }
 
