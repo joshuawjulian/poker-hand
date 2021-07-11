@@ -64,7 +64,6 @@ export class HoldemHandStepper implements PokerHandStepper {
 	/**
 	 *
 	 * @param state
-	 * test
 	 * @returns an array of last actions for all seats, indexed by the seat number
 	 */
 	lastActionForAllSeats(
@@ -90,9 +89,5 @@ export class HoldemHandStepper implements PokerHandStepper {
 		}
 
 		return actions;
-	}
-
-	shiftOneSeat(seat: number, numSeats: number): number {
-		return (seat % numSeats) + 1;
 	}
 }

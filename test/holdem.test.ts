@@ -1,6 +1,12 @@
 import { expect } from 'chai';
 
-import { Action, HoldemHandStepper, PokerGameState, Seat } from '../src/poker';
+import {
+	Action,
+	HoldemHandStepper,
+	PokerGameState,
+	Seat,
+	shiftOneSeat,
+} from '../src/poker';
 import { basicFullHand } from './gameState';
 
 const h: HoldemHandStepper = new HoldemHandStepper();
@@ -44,11 +50,11 @@ describe('Holdem Poker', () => {
 
 	describe('#shiftOneSeat', () => {
 		it('should shift one seat and wrap when needed', () => {
-			expect(h.shiftOneSeat(1, 6)).to.equal(2);
-			expect(h.shiftOneSeat(5, 6)).to.equal(6);
-			expect(h.shiftOneSeat(6, 6)).to.equal(1);
-			expect(h.shiftOneSeat(2, 2)).to.equal(1);
-			expect(h.shiftOneSeat(1, 2)).to.equal(2);
+			expect(shiftOneSeat(1, 6)).to.equal(2);
+			expect(shiftOneSeat(5, 6)).to.equal(6);
+			expect(shiftOneSeat(6, 6)).to.equal(1);
+			expect(shiftOneSeat(2, 2)).to.equal(1);
+			expect(shiftOneSeat(1, 2)).to.equal(2);
 		});
 	});
 
