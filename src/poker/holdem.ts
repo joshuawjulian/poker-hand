@@ -1,93 +1,163 @@
 import { stat } from 'fs';
-import { isUndefined } from 'util';
-import {
+import { seatsThatHaveAction, Street } from '.';
+import type {
 	Action,
 	ActionDetail,
 	PokerGameState,
-	PokerHandStepper,
+	PokerEngine,
 	Seat,
 } from './types';
 
 export type BettingRound = 'preflop' | 'flop' | 'turn' | 'river';
 
 // Getting my functional programming on
-export class HoldemHandStepper implements PokerHandStepper {
-	/**
-	 * Returns the next seat with action and the actions they can take
-	 * @param state
-	 * @returns
-	 */
-	next(state: PokerGameState): [Seat, Action[]] {
-		if (state?.numberSeats === undefined)
-			throw new Error('numberSeats is mandatory');
+export function next(state: PokerGameState): [Seat, Action[]] {
+	return [0, ['deal']];
+}
 
-		if (!state.actions) throw new Error('actions is mandatory');
+export function push(
+	action: ActionDetail,
+	state: PokerGameState
+): PokerGameState {
+	return state;
+}
 
-		if (state.numberSeats > 10 || state.numberSeats < 2)
-			throw new Error('number of seats cant be >10 or <2');
+export function clipStateActions(
+	state: PokerGameState,
+	idx: number
+): PokerGameState {
+	let newState = Object.assign({}, state);
+	newState.actions = newState.actions.slice(0, idx);
+	return newState;
+}
 
-		// new poker hand
-		if (state.actions.length === 0)
-			return [1, ['blind', 'bet', 'fold', 'check', 'straddle']];
+/**
+ *
+ * @param state
+ * @returns Array of Action where the index is the seat number.
+ * 					index 0 is the dealer
+ */
+export function lastActionOfEverySeat(state: PokerGameState): ActionDetail[] {
+	let lastActions = new Array(state.numberSeats + 1);
+	lastActions.fill(null);
+
+	state.actions.forEach((action: ActionDetail, index: number) => {
+		lastActions[action.seat] = action;
+	});
+
+	return lastActions;
+}
+
+export const printActionList = (actions: ActionDetail[]): void => {
+	actions.forEach((act, idx) => {
+		console.log(`${idx} = ${JSON.stringify(act)}`);
+	});
+};
+
+export function howManyDealerActions(state: PokerGameState): number {
+	return state.actions.filter((action) => {
+		return action.seat === 0;
+	}).length;
+}
+
+export function whichStreet(state: PokerGameState): Street {
+	return numberToStreet(howManyDealerActions(state));
+}
+
+export function numberToStreet(street: number): Street {
+	switch (street) {
+		case 1:
+			return 'preflop';
+		case 2:
+			return 'flop';
+		case 3:
+			return 'turn';
+		case 4:
+			return 'river';
+		case 5:
+			return 'showdown';
 	}
+}
 
-	push(action: ActionDetail, state: PokerGameState): PokerGameState {
-		return state;
+export function streetToNumber(street: Street): number {
+	switch (street) {
+		case 'preflop':
+			return 1;
+		case 'flop':
+			return 2;
+		case 'turn':
+			return 3;
+		case 'river':
+			return 4;
+		case 'showdown':
+			return 5;
 	}
+	return 0;
+}
 
-	seatWithNextAction(
-		state: PokerGameState,
-		numberOfActions: number = undefined
-	): Seat {
-		if (numberOfActions === undefined) numberOfActions = state.actions.length;
-		if (numberOfActions < 0)
-			throw new Error(
-				`numberOfActions(${numberOfActions}) must be 0 or positive`
-			);
-		if (numberOfActions > state.actions.length + 1)
-			throw new Error(
-				`numberOfActions(${numberOfActions}) is bigger than the number of actions in the state`
-			);
+export function streetStartsAtIndex(
+	streetSearching: Street,
+	state: PokerGameState
+): number {
+	let idx = -1;
+	//verify we are there first
+	const streetSearchingNum = streetToNumber(streetSearching);
+	let currentStreet = whichStreet(state);
+	if (streetSearchingNum > streetToNumber(currentStreet))
+		throw new Error('Street searching for is not in current game state');
 
-		if (state.actions.length === 0) return 1;
-
-		const lastActions: Action[] = this.lastActionForAllSeats(state);
-		let seatPrev: Seat = 'D';
-		let seatNext: Seat;
-		for (let i = 0; i < numberOfActions; i++) {
-			if (i === 0) seatNext = 1;
-			else {
-			}
+	let dealerActions = 0;
+	state.actions.forEach((action, currIdx) => {
+		if (action.seat === 0) {
+			dealerActions++;
+			if (dealerActions === streetSearchingNum) idx = currIdx;
 		}
-	}
+	});
+	return idx;
+}
 
-	/**
-	 *
-	 * @param state
-	 * @returns an array of last actions for all seats, indexed by the seat number
-	 */
-	lastActionForAllSeats(
-		state: PokerGameState,
-		numberOfActions: number = undefined
-	): Action[] {
-		if (numberOfActions === undefined) numberOfActions = state.actions.length;
-		if (numberOfActions < 0)
-			throw new Error(
-				`numberOfActions(${numberOfActions}) must be 0 or positive`
-			);
-		if (numberOfActions > state.actions.length + 1)
-			throw new Error(
-				`numberOfActions(${numberOfActions}) is bigger than the number of actions in the state`
-			);
+export function streetEndsAtIndex(
+	streetSearching: Street,
+	state: PokerGameState
+): number {
+	let idx = -1;
+	//verify we are there first
+	const streetSearchingNum = streetToNumber(streetSearching);
+	let currentStreet = whichStreet(state);
+	if (streetSearchingNum > streetToNumber(currentStreet))
+		throw new Error('Street searching for is not in current game state');
 
-		let actions: Action[] = new Array<Action>(state.numberSeats).fill(null);
+	if (streetSearching === currentStreet) return state.actions.length - 1;
 
-		for (let i = 0; i < numberOfActions; i++) {
-			let currAction = state.actions[i];
-			if (currAction.seat == 'D') actions[0] = currAction.action;
-			else actions[currAction.seat] = currAction.action;
+	let dealerActions = 0;
+	state.actions.forEach((action, currIdx) => {
+		if (action.seat === 0) {
+			dealerActions++;
+			if (dealerActions - 1 === streetSearchingNum) idx = currIdx - 1;
 		}
+	});
+	return idx;
+}
 
-		return actions;
+export function seatsNotFolded(state: PokerGameState): Seat[] {
+	//create array of all
+	let seatsNotFolded = Array.from(Array(state.numberSeats + 1).keys());
+	lastActionOfEverySeat(state).forEach((actionDetail) => {
+		if (actionDetail.action === 'fold')
+			seatsNotFolded.splice(
+				seatsNotFolded.indexOf(<number>actionDetail.seat),
+				1
+			);
+	});
+	return seatsNotFolded;
+}
+
+export function seatsThatHaveActionThisStreet(state: PokerGameState): Seat[] {
+	let street = whichStreet(state);
+	let idxStartOfStreet = streetStartsAtIndex(street, state);
+	let idxEndOfStreet = streetEndsAtIndex(street, state);
+	let seatsLeftToAct = seatsNotFolded(state);
+	for (let i = idxStartOfStreet; i <= idxEndOfStreet; i++) {
+		const action = state.actions[i];
 	}
 }
