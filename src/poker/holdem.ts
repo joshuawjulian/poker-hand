@@ -1,17 +1,11 @@
-import { stat } from 'fs';
-import { seatsThatHaveAction, Street } from '.';
-import type {
-	Action,
-	ActionDetail,
-	PokerGameState,
-	PokerEngine,
-	Seat,
-} from './types';
+import { Street } from './types';
+import type { Action, ActionDetail, PokerGameState, Seat } from './types';
+import { rotateArrayFTB } from '.';
 
 export type BettingRound = 'preflop' | 'flop' | 'turn' | 'river';
 
 // Getting my functional programming on
-export function next(state: PokerGameState): [Seat, Action[]] {
+export function next(state: PokerGameState): [number, Action[]] {
 	return [0, ['deal']];
 }
 
@@ -139,7 +133,7 @@ export function streetEndsAtIndex(
 	return idx;
 }
 
-export function seatsNotFolded(state: PokerGameState): Seat[] {
+export function seatsNotFolded(state: PokerGameState): number[] {
 	//create array of all
 	let seatsNotFolded = Array.from(Array(state.numberSeats + 1).keys());
 	lastActionOfEverySeat(state).forEach((actionDetail) => {
@@ -152,12 +146,102 @@ export function seatsNotFolded(state: PokerGameState): Seat[] {
 	return seatsNotFolded;
 }
 
-export function seatsThatHaveActionThisStreet(state: PokerGameState): Seat[] {
+/**
+ *	List all the seats that have an action to make on the latest street
+ * @param state
+ */
+export const seatsThatHaveAction = (state: PokerGameState): number[] => {
 	let street = whichStreet(state);
 	let idxStartOfStreet = streetStartsAtIndex(street, state);
-	let idxEndOfStreet = streetEndsAtIndex(street, state);
+
 	let seatsLeftToAct = seatsNotFolded(state);
-	for (let i = idxStartOfStreet; i <= idxEndOfStreet; i++) {
+	for (let i = 0; i <= idxStartOfStreet; i++) {
 		const action = state.actions[i];
+		if (action?.allin || action.action === 'fold') {
+			const idxOfSeat = seatsLeftToAct.indexOf(action.seat);
+			if (idxOfSeat > -1) seatsLeftToAct.splice(idxOfSeat, 1);
+		}
 	}
-}
+
+	return seatsLeftToAct;
+};
+
+export const seatsThatHaveNotActed = (state: PokerGameState): number[] => {
+	let street = whichStreet(state);
+	let idxStartOfStreet = streetStartsAtIndex(street, state);
+	let seatsWithAction = seatsThatHaveAction(state);
+	for (let i = idxStartOfStreet; i < state.actions.length; i++) {
+		const action = state.actions[i];
+		if (
+			action.action !== 'straddle' &&
+			action.action !== 'blind' &&
+			action.action !== 'ante'
+		) {
+			const idxOfSeat = seatsWithAction.indexOf(action.seat);
+			if (idxOfSeat > -1) seatsWithAction.splice(idxOfSeat, 1);
+		}
+	}
+	return seatsWithAction;
+};
+
+/**
+ * Checks if all seats that have action in the current round of poker
+ * have atleast one action
+ * @param state The poker game state to run on
+ * @returns {boolean} If all seats have acted atleast once
+ */
+export const allSeatsActed = (state: PokerGameState): boolean => {
+	return seatsThatHaveNotActed(state).length === 0;
+};
+
+export const currOrderOfActions = (state: PokerGameState): number[] => {
+	let seats = seatsThatHaveAction(state);
+	seats.splice(0, 1); // get rid of the dealer
+	let street = whichStreet(state);
+	let idxStartOfStreet = streetStartsAtIndex(street, state);
+
+	for (let i = idxStartOfStreet; i < state.actions.length; i++) {
+		const action = state.actions[i];
+		if (action.seat === 0) continue;
+		else if (action.seat === seats[0]) {
+			seats = rotateArrayFTB(seats);
+		}
+	}
+
+	return seats;
+};
+
+/**
+ *
+ * @param state
+ * @returns Seat that has the last most aggressive action THE
+ * CURRENT BETTING ROUND. If it returns 0, that means no aggressive action has
+ * been made (all check/call)
+ */
+export const seatLastAggressiveAction = (state: PokerGameState): Seat => {
+	let street = whichStreet(state);
+	let idxStartOfStreet = streetStartsAtIndex(street, state);
+	let seatsWithAction = seatsThatHaveAction(state);
+	let seatLastAggAction = seatsWithAction[0];
+
+	for (let i = idxStartOfStreet; i < state.actions.length; i++) {
+		const action = state.actions[i];
+		if (['bet', 'straddle', 'blind'].includes(action.action)) {
+			seatLastAggAction = action.seat;
+		}
+	}
+
+	return seatLastAggAction;
+};
+
+export const nextSeat = (state: PokerGameState): number => {
+	const lastActions = lastActionOfEverySeat(state);
+	const lastAggAction = seatLastAggressiveAction(state);
+	let orderOfActions = currOrderOfActions(state);
+
+	if (!allSeatsActed(state)) return orderOfActions[0];
+
+	if (orderOfActions[1] == lastAggAction) return orderOfActions[0];
+
+	return 0;
+};

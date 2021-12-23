@@ -1,8 +1,14 @@
 import {
+	allSeatsActed,
+	currOrderOfActions,
 	lastActionOfEverySeat,
+	nextSeat,
 	PokerGameState,
 	printActionList,
+	seatLastAggressiveAction,
+	seatsNotFolded,
 	seatsThatHaveAction,
+	seatsThatHaveNotActed,
 	streetEndsAtIndex,
 	streetStartsAtIndex,
 	whichStreet,
@@ -61,6 +67,13 @@ const state: PokerGameState = {
 			seat: 2,
 			action: 'check',
 		},
+		{
+			seat: 3,
+			action: 'bet',
+			detail: 100,
+		},
+		{ seat: 5, action: 'call', detail: 100 },
+		{ seat: 2, action: 'fold' },
 	],
 };
 
@@ -76,10 +89,26 @@ console.log(
 	`Street Ends at = idx[${streetEndsAtIndex(whichStreet(state), state)}]`
 );
 console.log(
+	`SeatsNotFolded = ${JSON.stringify(seatsNotFolded(state), null, 2)}`
+);
+console.log(
 	`Seats That Have Action = ${JSON.stringify(
 		seatsThatHaveAction(state),
 		null,
 		2
 	)}`
 );
-//export type Street = typeof Street[keyof typeof Street];
+console.log(
+	`seatsThatHaveNotActed = ${JSON.stringify(
+		seatsThatHaveNotActed(state),
+		null,
+		2
+	)}`
+);
+console.log(`allSeatsActed = ${JSON.stringify(allSeatsActed(state), null, 2)}`);
+
+console.log(`currOrderOfActions = ${currOrderOfActions(state)}`);
+
+console.log(`seatLastAggressiveAction = ${seatLastAggressiveAction(state)}`);
+
+console.log(`nextSeat = ${nextSeat(state)}`);
