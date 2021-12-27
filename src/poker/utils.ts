@@ -3,8 +3,8 @@ export const shiftOneSeat = (seat: number, numSeats: number): number => {
 };
 
 export const rotateArrayFTB = (arr: any[]): any[] => {
-	if (arr.length === 0) return [];
-	arr.push(arr.splice(0, 1));
+	if (arr.length === 0) return new Array();
+	arr.push(arr.splice(0, 1)[0]);
 
 	return arr;
 };

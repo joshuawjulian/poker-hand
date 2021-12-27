@@ -1,18 +1,4 @@
-import {
-	allSeatsActed,
-	currOrderOfActions,
-	lastActionOfEverySeat,
-	nextSeat,
-	PokerGameState,
-	printActionList,
-	seatLastAggressiveAction,
-	seatsNotFolded,
-	seatsThatHaveAction,
-	seatsThatHaveNotActed,
-	streetEndsAtIndex,
-	streetStartsAtIndex,
-	whichStreet,
-} from '../src/poker';
+import { PokerGameState, tableActions } from '../src/poker';
 
 const state: PokerGameState = {
 	numberSeats: 5,
@@ -77,38 +63,4 @@ const state: PokerGameState = {
 	],
 };
 
-let lastActions = lastActionOfEverySeat(state);
-
-printActionList(lastActions);
-
-console.log(`Current Street = ${whichStreet(state)}`);
-console.log(
-	`Street Starts at = idx[${streetStartsAtIndex(whichStreet(state), state)}]`
-);
-console.log(
-	`Street Ends at = idx[${streetEndsAtIndex(whichStreet(state), state)}]`
-);
-console.log(
-	`SeatsNotFolded = ${JSON.stringify(seatsNotFolded(state), null, 2)}`
-);
-console.log(
-	`Seats That Have Action = ${JSON.stringify(
-		seatsThatHaveAction(state),
-		null,
-		2
-	)}`
-);
-console.log(
-	`seatsThatHaveNotActed = ${JSON.stringify(
-		seatsThatHaveNotActed(state),
-		null,
-		2
-	)}`
-);
-console.log(`allSeatsActed = ${JSON.stringify(allSeatsActed(state), null, 2)}`);
-
-console.log(`currOrderOfActions = ${currOrderOfActions(state)}`);
-
-console.log(`seatLastAggressiveAction = ${seatLastAggressiveAction(state)}`);
-
-console.log(`nextSeat = ${nextSeat(state)}`);
+tableActions(state);
