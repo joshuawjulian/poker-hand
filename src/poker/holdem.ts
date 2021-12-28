@@ -142,7 +142,9 @@ export const seatsThatHaveAction = (state: PokerGameState): number[] => {
 	let street = whichStreet(state);
 	let idxStartOfStreet = streetStartsAtIndex(street, state);
 
-	let seatsLeftToAct = seatsNotFolded(state);
+	//let seatsLeftToAct = seatsNotFolded(state);
+	let seatsLeftToAct = [];
+	for (let i = 0; i < state.numberSeats + 1; i++) seatsLeftToAct.push(i);
 	for (let i = 0; i <= idxStartOfStreet; i++) {
 		const action = state.actions[i];
 		if (action?.allin || action.action === 'fold') {
@@ -155,16 +157,14 @@ export const seatsThatHaveAction = (state: PokerGameState): number[] => {
 };
 
 export const seatsThatHaveNotActed = (state: PokerGameState): number[] => {
+	console.log(`SeatsThatHaveNotActed`);
 	let street = whichStreet(state);
 	let idxStartOfStreet = streetStartsAtIndex(street, state);
 	let seatsWithAction = seatsThatHaveAction(state);
 	for (let i = idxStartOfStreet; i < state.actions.length; i++) {
 		const action = state.actions[i];
-		if (
-			action.action !== 'straddle' &&
-			action.action !== 'blind' &&
-			action.action !== 'ante'
-		) {
+		console.log(`seat ${action.seat} action ${action.action}`);
+		if (!['blind', 'straddle', 'ante'].includes(action.action)) {
 			const idxOfSeat = seatsWithAction.indexOf(action.seat);
 			if (idxOfSeat > -1) seatsWithAction.splice(idxOfSeat, 1);
 		}
@@ -174,7 +174,7 @@ export const seatsThatHaveNotActed = (state: PokerGameState): number[] => {
 
 /**
  * Checks if all seats that have action in the current round of poker
- * have atleast one action
+ * have atleast one non-mandatory action (check, bet, fold)
  * @param state The poker game state to run on
  * @returns {boolean} If all seats have acted atleast once
  */
@@ -201,74 +201,38 @@ export const currOrderOfActions = (state: PokerGameState): number[] => {
 /**
  *
  * @param state
- * @returns Seat that has the last most aggressive action THE
- * CURRENT BETTING ROUND. If it returns 0, that means no aggressive action has
+ * @returns ActionDetail that has the last most aggressive action THE
+ * CURRENT BETTING ROUND. If it returns seat 0, that means no aggressive action has
  * been made (all check/call)
  */
-export const seatLastAggressiveAction = (state: PokerGameState): number => {
+export const lastAggressiveAction = (state: PokerGameState): ActionDetail => {
 	let street = whichStreet(state);
 	let idxStartOfStreet = streetStartsAtIndex(street, state);
 	let seatsWithAction = seatsThatHaveAction(state);
-	let seatLastAggAction = seatsWithAction[0];
+	let lastAggAction = state.actions[idxStartOfStreet];
 
 	for (let i = idxStartOfStreet; i < state.actions.length; i++) {
 		const action = state.actions[i];
 		if (['bet', 'straddle', 'blind'].includes(action.action)) {
-			seatLastAggAction = action.seat;
+			lastAggAction = action;
 		}
 	}
 
-	return seatLastAggAction;
+	return lastAggAction;
 };
 
 export const nextSeat = (state: PokerGameState): number => {
 	const lastActions = lastActionOfEverySeat(state);
-	const lastAggAction = seatLastAggressiveAction(state);
+	const lastAggAction = lastAggressiveAction(state);
 	let orderOfActions = currOrderOfActions(state);
 
 	if (!allSeatsActed(state)) return orderOfActions[0];
 
-	if (orderOfActions[1] === lastAggAction) return orderOfActions[0];
+	if (orderOfActions[1] === lastAggAction.seat) return orderOfActions[0];
 
 	return 0;
 };
 
-// Getting my functional programming on
-export function next(state: PokerGameState): {
-	seat: number;
-	actions: Action[];
-} {
-	let seat = 0;
-	let actions: Action[] = ['deal'];
-	const street = whichStreet(state);
-	const lastAggressiveAction = seatLastAggressiveAction(state);
-	const lastActions = lastActionOfEverySeat(state);
-	let orderOfActions = currOrderOfActions(state);
-
-	seat = orderOfActions[0];
-	if (lastAggressiveAction === 0) {
-		actions = ['check', 'bet', 'fold'];
-	} else {
-		if (
-			['bet', 'straddle', 'blind'].includes(
-				lastActions[lastAggressiveAction].action
-			)
-		) {
-			actions = ['call', 'bet', 'fold'];
-		}
-	}
-
-	//check if all aggressive actions have been replied to
-	if (lastAggressiveAction == orderOfActions[0]) {
-		//dealer action now
-		seat = 0;
-		if (street === 'river') actions = ['end'];
-		else actions = ['deal'];
-		return { seat, actions };
-	}
-
-	return { seat, actions };
-}
 /**
  *
  * @param state
@@ -324,21 +288,19 @@ export const printAll = (state: PokerGameState) => {
 		`allSeatsActed = ${JSON.stringify(allSeatsActed(state), null, 2)}`
 	);
 	console.log(`currOrderOfActions = ${currOrderOfActions(state)}`);
-	console.log(`seatLastAggressiveAction = ${seatLastAggressiveAction(state)}`);
+	console.log(`lastAggressiveAction = ${lastAggressiveAction(state)}`);
 	console.log(`nextSeat = ${nextSeat(state)}`);
 	console.log(`next = ${JSON.stringify(next(state))}`);
 };
 
-export const largestAmount = (state: PokerGameState) => {
+export const largestAmount = (state: PokerGameState): number => {
 	const lastActions = lastActionOfEverySeat(state);
-	const lastAggAction = seatLastAggressiveAction(state);
+	const lastAggAction = lastAggressiveAction(state);
 
-	if (lastAggAction === 0) return 0;
+	if (lastAggAction.seat === 0) return 0;
 
-	if (
-		['bet', 'blind', 'straddle'].includes(lastActions[lastAggAction].action)
-	) {
-		return lastActions[lastAggAction].detail;
+	if (['bet', 'blind', 'straddle'].includes(lastAggAction.action)) {
+		return <number>lastAggAction.detail;
 	}
 };
 
@@ -431,7 +393,7 @@ export const push = (
 ): PokerGameState => {
 	const { seat, actions } = next(state);
 	if (!actions.includes(ad.action) || ad.seat !== seat)
-		throw new Error('Illegal Action or Seat');
+		throw new Error(`Bad Action or Seat - Action:${ad.action} | Seat: ${seat}`);
 
 	if (ad.action === 'call') {
 		const largestAmt = largestAmount(state);
@@ -449,3 +411,75 @@ export const push = (
 	state.actions.push(ad);
 	return state;
 };
+// Getting my functional programming on
+export function next(state: PokerGameState): {
+	seat: number;
+	actions: Action[];
+} {
+	let actions: Action[] = ['deal'];
+	const street = whichStreet(state);
+	const lastAggAct = lastAggressiveAction(state);
+
+	const lastActions = lastActionOfEverySeat(state);
+	const orderOfActions = currOrderOfActions(state);
+	const currSeat = orderOfActions[0];
+
+	let seat = currSeat;
+	console.log(`next()`);
+	console.log(`street = ${street}`);
+	console.log(`lastAggAct = ${JSON.stringify(lastAggAct)}`);
+
+	//check for no agressive actions yet (dealer is last agressor)
+	if (lastAggAct.action === 'deal') {
+		actions = ['check', 'bet', 'fold'];
+		seat = currSeat;
+	} else if (['bet', 'straddle', 'blind'].includes(lastAggAct.action)) {
+		actions = ['call', 'bet', 'fold'];
+	}
+
+	//now we have to check if all aggressive actions have been replied to or
+	//if its preflop and the biggest blind/straddle has checked
+
+	if (
+		street === 'preflop' &&
+		['blind', 'straddle'].includes(lastAggAct.action)
+	) {
+		if (allSeatsActed(state)) {
+			//All seats have had one action on their hand AND the blind/straddle is
+			// still the only aggressive
+			console.log(`allSeatsActed`);
+			//did the latest blind/straddle check?
+			seat = 0;
+			actions = ['deal'];
+		} else if (lastAggAct.seat === currSeat) {
+			//on the latest blind/straddle with no raises
+			actions = ['check', 'bet', 'fold'];
+			seat = currSeat;
+		} else if (['blind', 'straddle'].includes(lastActions[currSeat].action)) {
+			//we are in a blind/straddle that isnt the latest
+			seat = currSeat;
+			if (lastActions[currSeat].detail < lastAggAct.detail) {
+				//blind/straddle is smaller
+				actions = ['call', 'bet', 'fold'];
+			} else if (lastActions[currSeat].detail === lastAggAct.detail) {
+				//same blind game
+				actions = ['check', 'bet', 'fold'];
+			}
+		} else {
+			//not everyone has acted
+			seat = currSeat;
+			actions = ['call', 'bet', 'fold'];
+		}
+	} else if (
+		lastAggAct.seat == orderOfActions[0] || //completed all agg actions
+		(allSeatsActed(state) && lastAggAct.action === 'deal')
+		// or all seats acted without an aggressive act (check through)
+	) {
+		//dealer action now
+		seat = 0;
+		if (street === 'river') actions = ['end'];
+		else actions = ['deal'];
+	}
+
+	return { seat, actions };
+}

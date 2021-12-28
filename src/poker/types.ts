@@ -1,18 +1,23 @@
-export type Rank =
-	| '2'
-	| '3'
-	| '4'
-	| '5'
-	| '6'
-	| '7'
-	| '8'
-	| '9'
-	| 'T'
-	| 'J'
-	| 'Q'
-	| 'K'
-	| 'A';
-export type Suit = 'c' | 'd' | 'h' | 's';
+export const RankArr = [
+	'2',
+	'3',
+	'4',
+	'5',
+	'6',
+	'7',
+	'8',
+	'9',
+	'T',
+	'J',
+	'Q',
+	'K',
+	'A',
+];
+
+export type Rank = typeof RankArr[number];
+
+export const SuitArr = ['c', 'd', 'h', 's'];
+export type Suit = typeof SuitArr[number];
 
 export interface Card {
 	rank: Rank;
