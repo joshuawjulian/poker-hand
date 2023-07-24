@@ -1,16 +1,1 @@
-# Ignore built ts files
-dist/**/*
-
-# Dependency directory
 node_modules
-
-# top level files not needed in a repo
-package-lock.json
-# Ignore built ts files
-dist/**/*
-
-# Dependency directory
-node_modules
-
-# top level files not needed in a repo
-package-lock.json
