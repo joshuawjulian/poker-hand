@@ -21,8 +21,17 @@ export const HoldemSeatActionSchema = z.discriminatedUnion('action',
 
 export type HoldemSeatActionType = z.infer<typeof HoldemSeatActionSchema>
 
+export const HoldemSeatStackSchema = z.object({
+	seat: HoldemSeatSchema,
+	stack: z.union([
+		z.number().int().nonnegative(),
+		z.literal('unknown')
+	])
+});
+
 export const HoldemSetupSchema = z.object({
   numberOfPlayers: HoldemSeatSchema,
+	startingStacks: HoldemSeatStackSchema.array(),
   blindActions: HoldemSeatActionSchema.array(),
   startOrder: HoldemSeatSchema.array().default([])
 });
