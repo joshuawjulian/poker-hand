@@ -1,12 +1,12 @@
 import {z} from 'zod';
 import { CardSchema } from './Card';
 
+export const HoldemSeatSchema = z.number().int().nonnegative();
+
 export const BetActionSchema = z.object({
   action: z.literal('bet'),
   amount: z.number()
 });
-
-export type BetActionType = z.infer<typeof BetActionSchema>;
 
 export const FoldActionSchema = z.object({
   action: z.literal('fold')
@@ -55,9 +55,22 @@ export const RiverActionSchema = z.object({
   card: CardSchema
 });
 
-export const HoldemActionSchema = z.discriminatedUnion('action',[
-  BetActionSchema, FoldActionSchema, CheckActionSchema, CallActionSchema, StraddleActionSchema, BlindActionSchema, AnteActionSchema,
-  PreflopActionSchema, FlopActionSchema, TurnActionSchema, RiverActionSchema
-]);
+
+
+export const HoldemActionSchema = z.discriminatedUnion('action',
+[
+	BetActionSchema,
+	FoldActionSchema,
+	CheckActionSchema,
+	CallActionSchema,
+	StraddleActionSchema,
+	BlindActionSchema,
+	AnteActionSchema,
+  PreflopActionSchema,
+	FlopActionSchema,
+	TurnActionSchema,
+	RiverActionSchema
+]
+);
 
 export type HoldemActionType = z.infer<typeof HoldemActionSchema>;

@@ -1,17 +1,30 @@
 import {z} from 'zod';
-import { HoldemActionSchema } from './HoldemPokerActions';
+import { AnteActionSchema, BetActionSchema, BlindActionSchema, CallActionSchema, CheckActionSchema, FlopActionSchema, FoldActionSchema, HoldemActionSchema, PreflopActionSchema, RiverActionSchema, StraddleActionSchema, TurnActionSchema } from './HoldemPokerActions';
 
 export const HoldemSeatSchema = z.number().int().nonnegative();
 
-export const HoldemSeatActionSchema = z.object({
-  seat: HoldemSeatSchema,
-  action: HoldemActionSchema
-});
+export const HoldemSeatActionSchema = z.discriminatedUnion('action',
+	[
+	BetActionSchema.extend({seat: HoldemSeatSchema}),
+	FoldActionSchema.extend({seat: HoldemSeatSchema}),
+	CheckActionSchema.extend({seat: HoldemSeatSchema}),
+	CallActionSchema.extend({seat: HoldemSeatSchema}),
+	StraddleActionSchema.extend({seat: HoldemSeatSchema}),
+	BlindActionSchema.extend({seat: HoldemSeatSchema}),
+	AnteActionSchema.extend({seat: HoldemSeatSchema}),
+	PreflopActionSchema,
+	FlopActionSchema,
+	TurnActionSchema,
+	RiverActionSchema
+	]
+)
+
+export type HoldemSeatActionType = z.infer<typeof HoldemSeatActionSchema>
 
 export const HoldemSetupSchema = z.object({
   numberOfPlayers: HoldemSeatSchema,
   blindActions: HoldemSeatActionSchema.array(),
-  startOrder: HoldemSeatSchema.array()
+  startOrder: HoldemSeatSchema.array().default([])
 });
 
 export const HoldemStateSchema = z.object({
